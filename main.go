@@ -39,7 +39,3 @@ func main() {
 
 	log.Fatal(srv.ListenAndServe())
 }
-
-func auth(w http.ResponseWriter, r *http.Request, _ httprouter.Params) {
-
-}
