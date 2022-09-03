@@ -1,22 +1,32 @@
 package config
 
 import (
-	"database/sql"
+	"context"
 	"log"
 
-	_ "github.com/lib/pq"
+	"github.com/jackc/pgx/v4/pgxpool"
 )
 
-var DB *sql.DB
+var DB *pgxpool.Pool
 
 func InitDB(dataSourceName string) {
+	// var err error
+	// DB, err = sql.Open("postgres", dataSourceName)
+	// if err != nil {
+	// 	log.Panic(err)
+	// }
+
 	var err error
-	DB, err = sql.Open("postgres", dataSourceName)
+	DB, err = pgxpool.Connect(context.Background(), dataSourceName)
 	if err != nil {
 		log.Panic(err)
 	}
 
-	if err = DB.Ping(); err != nil {
+	if err = DB.Ping(context.Background()); err != nil {
 		log.Panic(err)
 	}
+}
+
+func CloseDB() {
+	DB.Close()
 }

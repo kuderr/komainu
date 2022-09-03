@@ -22,6 +22,7 @@ func main() {
 	)
 
 	config.InitDB(dbUrl)
+	defer config.CloseDB()
 
 	router := httprouter.New()
 

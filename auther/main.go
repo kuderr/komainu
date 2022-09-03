@@ -2,6 +2,7 @@ package auther
 
 import (
 	"auther/config"
+	"context"
 	"errors"
 	"log"
 	"os"
@@ -27,23 +28,50 @@ type DecodedToken struct {
 }
 
 func checkAccess(authData *AuthData) (bool, error) {
+	// Can make operations in parallel:
+	// 1. decode token
+	// 2. get client, api
+	// 3. get api client association
+	// 4. get route
+	// 5. get client route association
+
+	// 1
 	token, err := decodeToken(authData.Token)
 	if err != nil {
 		return false, err
 	}
 
-	var clientId string
-	clientId, err = getClientIDByName(token.Subject.ClientName)
-	if err != nil {
-		return false, err
+	// 2
+	c1 := make(chan string)
+	c2 := make(chan string)
+
+	go func(name string) {
+		id, err := getClientIDByName(name)
+		if err != nil {
+			log.Println(err)
+		}
+
+		c1 <- id
+	}(token.Subject.ClientName)
+
+	go func(url string) {
+		id, err := getApiIDByUrl(url)
+		if err != nil {
+			log.Println(err)
+		}
+
+		c2 <- id
+	}(authData.ApiUrl)
+
+	clientId := <-c1
+	apiId := <-c2
+
+	if clientId == "" || apiId == "" {
+		// FIXME
+		return false, errors.New("Not found api or client")
 	}
 
-	var apiId string
-	apiId, err = getApiIDByUrl(authData.ApiUrl)
-	if err != nil {
-		return false, err
-	}
-
+	// 3
 	var isApiAdmin bool
 	isApiAdmin, err = isApiAdminAssociationExist(clientId, apiId)
 	if err != nil {
@@ -53,12 +81,14 @@ func checkAccess(authData *AuthData) (bool, error) {
 		return true, nil
 	}
 
+	// 4
 	var routeId string
 	routeId, err = getApiRouteIDByMethodAndPath(apiId, authData.Method, authData.Path)
 	if err != nil {
 		return false, err
 	}
 
+	// 5
 	var hasRouteAccess bool
 	hasRouteAccess, err = isRouteAccessExist(clientId, routeId)
 	if err != nil {
@@ -73,7 +103,7 @@ func checkAccess(authData *AuthData) (bool, error) {
 
 func getClientIDByName(clientName string) (string, error) {
 	var clientId string
-	err := config.DB.QueryRow("SELECT id FROM clients WHERE name = $1", clientName).Scan(&clientId)
+	err := config.DB.QueryRow(context.Background(), "SELECT id FROM clients WHERE name = $1", clientName).Scan(&clientId)
 	if err != nil {
 		return "", err
 	}
@@ -83,7 +113,7 @@ func getClientIDByName(clientName string) (string, error) {
 
 func getApiIDByUrl(apiUrl string) (string, error) {
 	var apiId string
-	err := config.DB.QueryRow("SELECT id FROM apis WHERE url = $1", apiUrl).Scan(&apiId)
+	err := config.DB.QueryRow(context.Background(), "SELECT id FROM apis WHERE url = $1", apiUrl).Scan(&apiId)
 	if err != nil {
 		return "", err
 	}
@@ -93,7 +123,7 @@ func getApiIDByUrl(apiUrl string) (string, error) {
 
 func isApiAdminAssociationExist(clientId string, apiId string) (bool, error) {
 	var count int
-	err := config.DB.QueryRow("SELECT count(*) FROM admins_association WHERE client_id = $1 AND api_id = $2", clientId, apiId).Scan(&count)
+	err := config.DB.QueryRow(context.Background(), "SELECT count(*) FROM admins_association WHERE client_id = $1 AND api_id = $2", clientId, apiId).Scan(&count)
 	if err != nil {
 		return false, err
 	}
@@ -103,7 +133,7 @@ func isApiAdminAssociationExist(clientId string, apiId string) (bool, error) {
 
 func getApiRouteIDByMethodAndPath(apiId string, method string, path string) (string, error) {
 	var routeId string
-	err := config.DB.QueryRow("SELECT id FROM routes WHERE api_id = $1 AND method = $2 AND path = $3", apiId, method, path).Scan(&routeId)
+	err := config.DB.QueryRow(context.Background(), "SELECT id FROM routes WHERE api_id = $1 AND method = $2 AND path = $3", apiId, method, path).Scan(&routeId)
 	if err != nil {
 		return "", err
 	}
@@ -122,7 +152,7 @@ func getApiRouteIDByMethodAndPath(apiId string, method string, path string) (str
 
 func isRouteAccessExist(clientId string, routeId string) (bool, error) {
 	var count int
-	err := config.DB.QueryRow("SELECT count(*) FROM routes_association WHERE client_id = $1 AND route_id = $2", clientId, routeId).Scan(&count)
+	err := config.DB.QueryRow(context.Background(), "SELECT count(*) FROM routes_association WHERE client_id = $1 AND route_id = $2", clientId, routeId).Scan(&count)
 	if err != nil {
 		return false, err
 	}
