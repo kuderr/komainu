@@ -21,18 +21,21 @@ func CheckAccess(w http.ResponseWriter, r *http.Request, _ httprouter.Params) {
 
 	hasAccess, err := checkAccess(&authData)
 	if err != nil {
-		log.Println(err)
+		log.Println(err, "500")
 		http.Error(w, http.StatusText(500), 500)
 		return
 	}
 
 	if hasAccess {
 		err = responses.SendData(w, "OK", 200)
+		log.Println(hasAccess, "200")
 	} else {
 		err = responses.SendData(w, "Access Denied", 403)
+		log.Println(hasAccess, "403")
 	}
 
 	if err != nil {
+		log.Println(err, "500")
 		http.Error(w, http.StatusText(500), 500)
 	}
 

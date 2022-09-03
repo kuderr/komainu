@@ -22,6 +22,7 @@ func main() {
 	)
 
 	config.InitDB(dbUrl)
+	defer config.CloseDB()
 
 	router := httprouter.New()
 
@@ -37,8 +38,4 @@ func main() {
 	fmt.Println("Server started at http://127.0.0.1:5000")
 
 	log.Fatal(srv.ListenAndServe())
-}
-
-func auth(w http.ResponseWriter, r *http.Request, _ httprouter.Params) {
-
 }
