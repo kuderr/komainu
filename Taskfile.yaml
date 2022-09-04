@@ -14,3 +14,10 @@ tasks:
     cmds: 
       - docker-compose --profile test up --build -d
       - defer: {task: stop}
+
+  pretty:
+    cmds:
+      - go fmt ./...
+      - go mod tidy
+      - go clean
+  

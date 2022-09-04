@@ -2,6 +2,7 @@ TODO:
 - upper case method, rstrip "/" for url and path (ez)
 - tests (testify, integration tests)
 - formaters, linters [https://github.com/golangci/awesome-go-linters]
+- profiling
 - Поиск по роут паттерну (regex :( )
 - settings like in pydantic. try read .env –> ignore fail, read from host env, search for config keys (search, or create this feature for GO community)
 - ci/cd
