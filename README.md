@@ -1,8 +1,8 @@
 TODO:
 - upper case method, rstrip "/" for url and path (ez)
-- tests (testify, integration tests)
+- tests (testify, integration tests) [https://github.com/stretchr/testify , https://github.com/bquenin/go-modern-rest-api-tutorial/blob/main/api/authors/authors_test.go]
 - formaters, linters [https://github.com/golangci/awesome-go-linters]
-- profiling
+- profiling [https://making.pusher.com/go-tool-trace/ , https://habr.com/ru/company/badoo/blog/301990/]
 - Поиск по роут паттерну (regex :( )
 - settings like in pydantic. try read .env –> ignore fail, read from host env, search for config keys (search, or create this feature for GO community)
 - ci/cd
