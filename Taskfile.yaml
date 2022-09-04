@@ -1,0 +1,16 @@
+version: "3"
+
+tasks:
+  stop:
+    cmds:
+      - docker-compose --profile all rm -sf
+  
+  start-dev:
+    cmds: 
+      - docker-compose --profile dev up --build
+      - defer: {task: stop}
+
+  setup-test:
+    cmds: 
+      - docker-compose --profile test up --build -d
+      - defer: {task: stop}
