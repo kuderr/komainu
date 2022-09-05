@@ -3,7 +3,7 @@
 package auther
 
 import (
-	"auther/cmd/service/config"
+	"auther/config"
 	"auther/internal/database"
 	"bytes"
 	"context"

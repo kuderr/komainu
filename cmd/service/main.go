@@ -16,8 +16,6 @@ func main() {
 		log.Fatal(err.Error())
 	}
 
-	log.Println(cfg)
-
 	// Instantiates the database
 	postgres, err := database.NewPostgres(cfg.PostgresUrl)
 	if err != nil {

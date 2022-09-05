@@ -3,6 +3,7 @@ package auther
 import (
 	"auther/internal/database"
 	"context"
+	"strings"
 
 	"github.com/gin-gonic/gin"
 )
@@ -13,7 +14,7 @@ func (s *Service) checkAccessInDB(c *gin.Context, request accessData, clientName
 		return false, err
 	}
 
-	apiId, err := s.queries.GetApiIdByUrl(context.Background(), request.ApiUrl)
+	apiId, err := s.queries.GetApiIdByUrl(context.Background(), strings.TrimRight(request.ApiUrl, "/"))
 	if err != nil {
 		return false, err
 	}
@@ -33,8 +34,8 @@ func (s *Service) checkAccessInDB(c *gin.Context, request accessData, clientName
 	routeId, err := s.queries.GetApiRouteIdByMethodAndPath(context.Background(),
 		database.GetApiRouteIdByMethodAndPathParams{
 			ApiID:  apiId,
-			Method: request.Method,
-			Path:   request.Path,
+			Method: strings.ToUpper(request.Method),
+			Path:   strings.TrimRight(request.Path, "/"),
 		})
 	//  TODO: search for pattern route
 	if err != nil {

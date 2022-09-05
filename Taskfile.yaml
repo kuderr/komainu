@@ -21,3 +21,14 @@ tasks:
       - go mod tidy
       - go clean
   
+  lint:
+    cmds: 
+      - golangci-lint run --trace-path trace.out --cpu-profile-path cpu.out --mem-profile-path mem.out
+
+  build:
+    cmds:
+      - go build -race -o main.out cmd/service/main.go
+  
+  run:
+    cmds:
+      - go run cmd/service/main.go
