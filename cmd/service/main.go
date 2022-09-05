@@ -2,7 +2,7 @@ package main
 
 import (
 	"auther/api/auther"
-	"auther/cmd/service/config"
+	"auther/config"
 	"auther/internal/database"
 	"log"
 
