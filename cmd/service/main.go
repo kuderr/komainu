@@ -21,6 +21,7 @@ func main() {
 	if err != nil {
 		log.Fatal(err.Error())
 	}
+	defer postgres.DB.Close()
 
 	// Instantiates the author service
 	queries := database.New(postgres.DB)
