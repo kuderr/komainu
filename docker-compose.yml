@@ -11,6 +11,8 @@ services:
       SECRET: xxx
     ports:
       - "8080:8080"
+    depends_on:
+      - postgres
 
   postgres:
     profiles: [ 'all', 'dev', 'test' ]
