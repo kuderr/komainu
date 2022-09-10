@@ -1,7 +1,7 @@
 version: "3.9"
 
 services:
-  auther:
+  server:
     profiles: [ 'all', 'dev' ]
     image: auther:local
     build:

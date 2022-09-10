@@ -13,7 +13,6 @@ tasks:
   setup-test:
     cmds: 
       - docker-compose --profile test up --build -d
-      - defer: {task: stop}
 
   pretty:
     cmds:
@@ -21,9 +20,15 @@ tasks:
       - go mod tidy
       - go clean
   
-  lint:
+  validate:
     cmds: 
       - golangci-lint run --trace-path trace.out --cpu-profile-path cpu.out --mem-profile-path mem.out
+  
+  test:
+    deps: [setup-test]
+    cmds:
+      - go test -v -cover ./...
+      - defer: {task: stop}
 
   build:
     cmds:

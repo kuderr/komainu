@@ -11,7 +11,7 @@ import (
 
 func main() {
 	// Read configuration
-	cfg, err := config.Read()
+	cfg, err := config.Read("env", ".env", ".")
 	if err != nil {
 		log.Fatal(err.Error())
 	}
