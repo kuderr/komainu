@@ -3,10 +3,9 @@
 package auther
 
 import (
-	"auther/cmd/service/config"
+	"auther/config"
 	"auther/internal/database"
 	"bytes"
-	"context"
 	"encoding/json"
 	"net/http"
 	"net/http/httptest"
@@ -29,7 +28,7 @@ func TestServiceTestSuite(t *testing.T) {
 }
 
 func (suite *ServiceTestSuite) SetupSuite() {
-	cfg, err := config.Read()
+	cfg, err := config.Read("env", ".env", ".")
 	suite.Require().NoError(err)
 
 	postgres, err := database.NewPostgres(cfg.PostgresUrl)
@@ -41,8 +40,6 @@ func (suite *ServiceTestSuite) SetupSuite() {
 	suite.router = gin.Default()
 	service.RegisterHandlers(suite.router)
 
-	// TODO: fill db
-	postgres.DB.Exec(context.Background(), "INSERT INTO")
 }
 
 type response struct {
@@ -51,9 +48,12 @@ type response struct {
 	client  string
 }
 
+// dummy test token, encoded with xxx secret above
+const Token string = "eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJzdWIiOnsiY2xpZW50X25hbWUiOiJ0ZXN0In19.7UXTvMN42-p2b76cGn0R17YW4P9UDpGT07D8pdfneuM"
+
 func (suite *ServiceTestSuite) TestCheckAccess() {
 	request := accessData{
-		Token:  "xxx",
+		Token:  Token,
 		ApiUrl: "https://test.com",
 		Path:   "/test",
 		Method: "/GET",

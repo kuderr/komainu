@@ -9,10 +9,11 @@ RUN go mod download
 COPY api ./api
 COPY cmd ./cmd
 COPY internal ./internal
+COPY config ./config
 
 RUN CGO_ENABLED=0 go build -o auther ./cmd/service/main.go
 
-FROM alpine:3.16.2
+FROM busybox
 WORKDIR /bin
 COPY --from=builder /opt/auther /bin/auther
 ENV GIN_MODE=release

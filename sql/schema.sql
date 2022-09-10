@@ -1,11 +1,11 @@
 CREATE TABLE routes_association (
-    client_id uuid PRIMARY KEY,
-    route_id uuid PRIMARY KEY
+    client_id uuid,
+    route_id uuid
 );
 
 CREATE TABLE admins_association (
-    client_id uuid PRIMARY KEY,
-    api_id uuid PRIMARY KEY
+    client_id uuid,
+    api_id uuid
 );
 
 CREATE TABLE clients (

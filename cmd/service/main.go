@@ -2,7 +2,7 @@ package main
 
 import (
 	"auther/api/auther"
-	"auther/cmd/service/config"
+	"auther/config"
 	"auther/internal/database"
 	"log"
 
@@ -11,18 +11,17 @@ import (
 
 func main() {
 	// Read configuration
-	cfg, err := config.Read()
+	cfg, err := config.Read("env", ".env", ".")
 	if err != nil {
 		log.Fatal(err.Error())
 	}
-
-	log.Println(cfg)
 
 	// Instantiates the database
 	postgres, err := database.NewPostgres(cfg.PostgresUrl)
 	if err != nil {
 		log.Fatal(err.Error())
 	}
+	defer postgres.DB.Close()
 
 	// Instantiates the author service
 	queries := database.New(postgres.DB)
