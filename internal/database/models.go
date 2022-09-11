@@ -8,11 +8,6 @@ import (
 	"github.com/google/uuid"
 )
 
-type AdminsAssociation struct {
-	ClientID uuid.UUID
-	ApiID    uuid.UUID
-}
-
 type Api struct {
 	ID   uuid.UUID
 	Name string

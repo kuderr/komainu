@@ -1,4 +1,4 @@
-package auther
+package tokens
 
 import (
 	"errors"
@@ -16,7 +16,7 @@ type DecodedToken struct {
 	jwt.StandardClaims
 }
 
-func decodeToken(token string, secret string) (DecodedToken, error) {
+func DecodeToken(token string, secret string) (DecodedToken, error) {
 	creds := strings.Replace(token, "Bearer ", "", 1)
 
 	tk := &DecodedToken{}

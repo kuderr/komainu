@@ -1,10 +1,12 @@
 package main
 
 import (
-	"auther/api/auther"
+	autherApi "auther/api/auther"
 	"auther/config"
+	"auther/internal/auther"
 	"auther/internal/database"
 	"log"
+	"time"
 
 	"github.com/gin-gonic/gin"
 )
@@ -23,14 +25,40 @@ func main() {
 	}
 	defer postgres.DB.Close()
 
-	// Instantiates the author service
 	queries := database.New(postgres.DB)
-	authService := auther.NewService(queries, cfg.Secret)
+	dbAuthStorage := auther.NewDatabaseAuthInfoStorage(queries)
+	builder := auther.NewBuilder(dbAuthStorage)
+	accesses, clients, err := builder.BuildAccessMap()
+	if err != nil {
+		log.Fatal(err.Error())
+	}
+
+	// Instantiates the author service
+	authInfo := auther.NewAuthInfo(accesses, clients)
+	authService := autherApi.NewService(authInfo, cfg.Secret)
 
 	// Register our service handlers to the router
 	router := gin.Default()
 	authService.RegisterHandlers(router)
 
+	go syncAuthInfo(builder, authInfo)
+
 	// Start the server
 	router.Run()
+}
+
+func syncAuthInfo(builder *auther.Builder, authInfo *auther.AuthInfo) {
+	ticker := time.NewTicker(60 * time.Second)
+	for {
+		select {
+		case <-ticker.C:
+			log.Println("sync auth info")
+			// TODO: Maybe pass pointers
+			accesses, clients, err := builder.BuildAccessMap()
+			if err != nil {
+				log.Println("Error: ", err.Error())
+			}
+			authInfo.Update(accesses, clients)
+		}
+	}
 }
