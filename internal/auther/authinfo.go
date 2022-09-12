@@ -36,12 +36,12 @@ func (a *AuthInfo) Update(accesses AccessMap, clients ClientsSet) {
 	a.clients = clients
 }
 
-func (a *AuthInfo) CheckAccess(request *AccessData, client_name string) (bool, error) {
+func (a *AuthInfo) CheckAccess(request *AccessData, clientName string) (bool, error) {
 	a.mutex.RLock()
 	defer a.mutex.RUnlock()
 
-	if _, ok := a.clients[client_name]; !ok {
-		return false, &NotFoundError{msg: fmt.Sprintf("Client %s not found", client_name)}
+	if _, ok := a.clients[clientName]; !ok {
+		return false, &NotFoundError{msg: fmt.Sprintf("Client %s not found", clientName)}
 	}
 
 	reqApiUrl := strings.TrimRight(request.ApiUrl, "/")
@@ -69,7 +69,7 @@ func (a *AuthInfo) CheckAccess(request *AccessData, client_name string) (bool, e
 		}
 	}
 
-	if contains(users, client_name) {
+	if contains(users, clientName) {
 		return true, nil
 	}
 

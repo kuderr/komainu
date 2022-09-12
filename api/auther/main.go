@@ -36,7 +36,13 @@ func (s *Service) CheckAccess(c *gin.Context) {
 		return
 	}
 
-	hasAccess, err := s.authInfo.CheckAccess(&request, token.Subject.ClientName)
+	clientName, err := tokens.GetClientName(token)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
+
+	hasAccess, err := s.authInfo.CheckAccess(&request, clientName)
 	if err != nil {
 		switch err.(type) {
 		case *auther.NotFoundError:
@@ -50,8 +56,8 @@ func (s *Service) CheckAccess(c *gin.Context) {
 
 	// Build response
 	if hasAccess {
-		c.IndentedJSON(http.StatusOK, gin.H{"message": "Access permit", "access": true, "client": token.Subject.ClientName})
+		c.IndentedJSON(http.StatusOK, gin.H{"message": "Access permit", "access": true, "client": clientName})
 	} else {
-		c.IndentedJSON(http.StatusForbidden, gin.H{"message": "Access denied", "access": false, "client": token.Subject.ClientName})
+		c.IndentedJSON(http.StatusForbidden, gin.H{"message": "Access denied", "access": false, "client": clientName})
 	}
 }

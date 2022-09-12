@@ -1,32 +1,39 @@
 package tokens
 
 import (
-	"errors"
-	"strings"
+	"fmt"
 
-	"github.com/dgrijalva/jwt-go"
+	"github.com/golang-jwt/jwt/v4"
 )
 
-type TokenBody struct {
-	ClientName string `json:"client_name"`
-}
+func DecodeToken(tokenString string, secret string) (map[string]interface{}, error) {
+	token, err := jwt.Parse(tokenString, func(token *jwt.Token) (interface{}, error) {
+		if _, ok := token.Method.(*jwt.SigningMethodHMAC); !ok {
+			return nil, fmt.Errorf("Unexpected signing method: %v", token.Header["alg"])
+		}
 
-type DecodedToken struct {
-	Subject TokenBody `json:"sub"`
-	jwt.StandardClaims
-}
-
-func DecodeToken(token string, secret string) (DecodedToken, error) {
-	creds := strings.Replace(token, "Bearer ", "", 1)
-
-	tk := &DecodedToken{}
-	decoded, err := jwt.ParseWithClaims(creds, tk, func(t *jwt.Token) (interface{}, error) {
 		return []byte(secret), nil
 	})
 
-	if !decoded.Valid {
-		err = errors.New("Invalid Token")
+	claims, ok := token.Claims.(jwt.MapClaims)
+	if !ok || !token.Valid {
+		return nil, err
 	}
 
-	return *tk, err
+	return claims, nil
+
+}
+
+func GetClientName(claims map[string]interface{}) (string, error) {
+	sub, ok := claims["sub"].(map[string]interface{})
+	if !ok {
+		return "", fmt.Errorf("Invalid token body")
+	}
+
+	clientName, ok := sub["client_name"].(string)
+	if !ok {
+		return "", fmt.Errorf("Invalid token body")
+	}
+
+	return clientName, nil
 }
