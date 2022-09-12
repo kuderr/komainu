@@ -138,3 +138,11 @@ func (suite *AutherTestSuite) TestCheckAccesPathsNotFound() {
 	suite.Require().Equal(err, &NotFoundError{msg: "Not found paths for POST https://test.com"})
 	suite.Require().Equal(isAccess, false)
 }
+
+func (suite *AutherTestSuite) TestUpdate() {
+	suite.authInfo.Update(AccessMap{"https://test.com": {"GET": {"/test": {"test"}}}},
+		ClientsSet{"test": struct{}{}})
+
+	suite.Require().Equal(suite.authInfo.accesses, AccessMap{"https://test.com": {"GET": {"/test": {"test"}}}})
+	suite.Require().Equal(suite.authInfo.clients, ClientsSet{"test": struct{}{}})
+}
