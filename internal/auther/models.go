@@ -3,7 +3,6 @@ package auther
 import "github.com/google/uuid"
 
 type AccessData struct {
-	Token  string `json:"token,omitempty" binding:"required"`
 	ApiUrl string `json:"api_url,omitempty" binding:"required"`
 	Path   string `json:"path,omitempty" binding:"required"`
 	Method string `json:"method,omitempty" binding:"required"`

@@ -8,6 +8,11 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
+type AuthRequest struct {
+	Token string `json:"token,omitempty" binding:"required"`
+	auther.AccessData
+}
+
 type Service struct {
 	authInfo *auther.AuthInfo
 	secret   string
@@ -24,7 +29,7 @@ func (s *Service) RegisterHandlers(router *gin.Engine) {
 
 func (s *Service) CheckAccess(c *gin.Context) {
 	// Parse request
-	var request auther.AccessData
+	var request AuthRequest
 	if err := c.ShouldBindJSON(&request); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
@@ -42,7 +47,7 @@ func (s *Service) CheckAccess(c *gin.Context) {
 		return
 	}
 
-	hasAccess, err := s.authInfo.CheckAccess(&request, clientName)
+	hasAccess, err := s.authInfo.CheckAccess(&request.AccessData, clientName)
 	if err != nil {
 		switch err.(type) {
 		case *auther.NotFoundError:
