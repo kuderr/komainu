@@ -11,100 +11,28 @@ import (
 	"github.com/google/uuid"
 )
 
-const countAdminAssociation = `-- name: CountAdminAssociation :one
-SELECT count(*)
-FROM admins_association 
-WHERE client_id = $1 AND api_id = $2
-`
-
-type CountAdminAssociationParams struct {
-	ClientID uuid.UUID
-	ApiID    uuid.UUID
-}
-
-func (q *Queries) CountAdminAssociation(ctx context.Context, arg CountAdminAssociationParams) (int64, error) {
-	row := q.db.QueryRow(ctx, countAdminAssociation, arg.ClientID, arg.ApiID)
-	var count int64
-	err := row.Scan(&count)
-	return count, err
-}
-
-const countRouteAssociation = `-- name: CountRouteAssociation :one
-SELECT count(*)
-FROM routes_association 
-WHERE client_id = $1 AND route_id = $2
-`
-
-type CountRouteAssociationParams struct {
-	ClientID uuid.UUID
-	RouteID  uuid.UUID
-}
-
-func (q *Queries) CountRouteAssociation(ctx context.Context, arg CountRouteAssociationParams) (int64, error) {
-	row := q.db.QueryRow(ctx, countRouteAssociation, arg.ClientID, arg.RouteID)
-	var count int64
-	err := row.Scan(&count)
-	return count, err
-}
-
-const getApiIdByUrl = `-- name: GetApiIdByUrl :one
-SELECT id 
-FROM apis 
-WHERE url = $1
-`
-
-func (q *Queries) GetApiIdByUrl(ctx context.Context, url string) (uuid.UUID, error) {
-	row := q.db.QueryRow(ctx, getApiIdByUrl, url)
-	var id uuid.UUID
-	err := row.Scan(&id)
-	return id, err
-}
-
-const getApiRouteIdByMethodAndPath = `-- name: GetApiRouteIdByMethodAndPath :one
-SELECT id 
+const getApiRoutes = `-- name: GetApiRoutes :many
+SELECT id, path, method
 FROM routes 
-WHERE api_id = $1 AND method = $2 AND path = $3
+WHERE api_id = $1
 `
 
-type GetApiRouteIdByMethodAndPathParams struct {
-	ApiID  uuid.UUID
-	Method string
+type GetApiRoutesRow struct {
+	ID     uuid.UUID
 	Path   string
-}
-
-func (q *Queries) GetApiRouteIdByMethodAndPath(ctx context.Context, arg GetApiRouteIdByMethodAndPathParams) (uuid.UUID, error) {
-	row := q.db.QueryRow(ctx, getApiRouteIdByMethodAndPath, arg.ApiID, arg.Method, arg.Path)
-	var id uuid.UUID
-	err := row.Scan(&id)
-	return id, err
-}
-
-const getApiRoutesByMethod = `-- name: GetApiRoutesByMethod :many
-SELECT id, method, path, api_id 
-FROM routes 
-WHERE api_id = $1 AND method = $2
-`
-
-type GetApiRoutesByMethodParams struct {
-	ApiID  uuid.UUID
 	Method string
 }
 
-func (q *Queries) GetApiRoutesByMethod(ctx context.Context, arg GetApiRoutesByMethodParams) ([]Route, error) {
-	rows, err := q.db.Query(ctx, getApiRoutesByMethod, arg.ApiID, arg.Method)
+func (q *Queries) GetApiRoutes(ctx context.Context, apiID uuid.UUID) ([]GetApiRoutesRow, error) {
+	rows, err := q.db.Query(ctx, getApiRoutes, apiID)
 	if err != nil {
 		return nil, err
 	}
 	defer rows.Close()
-	var items []Route
+	var items []GetApiRoutesRow
 	for rows.Next() {
-		var i Route
-		if err := rows.Scan(
-			&i.ID,
-			&i.Method,
-			&i.Path,
-			&i.ApiID,
-		); err != nil {
+		var i GetApiRoutesRow
+		if err := rows.Scan(&i.ID, &i.Path, &i.Method); err != nil {
 			return nil, err
 		}
 		items = append(items, i)
@@ -115,15 +43,84 @@ func (q *Queries) GetApiRoutesByMethod(ctx context.Context, arg GetApiRoutesByMe
 	return items, nil
 }
 
-const getClientIdByName = `-- name: GetClientIdByName :one
-SELECT id
-FROM clients 
-WHERE name = $1
+const getApis = `-- name: GetApis :many
+SELECT id, url
+FROM apis
 `
 
-func (q *Queries) GetClientIdByName(ctx context.Context, name string) (uuid.UUID, error) {
-	row := q.db.QueryRow(ctx, getClientIdByName, name)
-	var id uuid.UUID
-	err := row.Scan(&id)
-	return id, err
+type GetApisRow struct {
+	ID  uuid.UUID
+	Url string
+}
+
+func (q *Queries) GetApis(ctx context.Context) ([]GetApisRow, error) {
+	rows, err := q.db.Query(ctx, getApis)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []GetApisRow
+	for rows.Next() {
+		var i GetApisRow
+		if err := rows.Scan(&i.ID, &i.Url); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
+const getClients = `-- name: GetClients :many
+SELECT name
+FROM clients
+`
+
+func (q *Queries) GetClients(ctx context.Context) ([]string, error) {
+	rows, err := q.db.Query(ctx, getClients)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []string
+	for rows.Next() {
+		var name string
+		if err := rows.Scan(&name); err != nil {
+			return nil, err
+		}
+		items = append(items, name)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
+const getRouteClients = `-- name: GetRouteClients :many
+SELECT c.name 
+FROM routes_association AS ra 
+JOIN clients AS c ON ra.client_id=c.id 
+WHERE route_id = $1
+`
+
+func (q *Queries) GetRouteClients(ctx context.Context, routeID uuid.UUID) ([]string, error) {
+	rows, err := q.db.Query(ctx, getRouteClients, routeID)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []string
+	for rows.Next() {
+		var name string
+		if err := rows.Scan(&name); err != nil {
+			return nil, err
+		}
+		items = append(items, name)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
 }
