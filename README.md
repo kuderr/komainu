@@ -1,5 +1,5 @@
-# Auth Checker
+# Komainu
 
-Модуль проверки доступов до API рутов сервиса AuthAPI.
+Accesses Control
 
 [TODO] Ещё напишу README
