@@ -7,7 +7,7 @@ services:
       context: .
     environment:
       POSTGRES_URL: postgres://postgres:postgres@postgres/authdb
-      APP_SECRET: xxx
+      JWT_PUBLIC_KEY: xxx
     ports:
       - "5000:5000"
     depends_on:
