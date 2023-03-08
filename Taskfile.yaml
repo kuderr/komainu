@@ -4,14 +4,14 @@ tasks:
   stop:
     cmds:
       - docker-compose --profile all rm -sf
-  
+
   start-dev:
-    cmds: 
+    cmds:
       - docker-compose --profile dev up --build
-      - defer: {task: stop}
+      - defer: { task: stop }
 
   setup-test:
-    cmds: 
+    cmds:
       - docker-compose --profile test up --build -d
 
   pretty:
@@ -19,11 +19,11 @@ tasks:
       - go fmt ./...
       - go mod tidy
       - go clean
-  
+
   validate:
-    cmds: 
+    cmds:
       - golangci-lint run
-  
+
   test:
     cmds:
       - go test -v -coverprofile cover.out ./...
@@ -32,7 +32,11 @@ tasks:
   build:
     cmds:
       - go build -race -o main.out cmd/service/main.go
-  
+
   run:
     cmds:
       - go run cmd/service/main.go
+
+  sqlc-generate:
+    cmds:
+      - sqlc generate
