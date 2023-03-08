@@ -1,4 +1,4 @@
-package auther
+package checker
 
 import "github.com/google/uuid"
 
@@ -14,8 +14,7 @@ type Api struct {
 }
 
 type Client struct {
-	ID   uuid.UUID
-	Name string
+	ID uuid.UUID
 }
 
 type Route struct {

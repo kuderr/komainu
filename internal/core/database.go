@@ -1,10 +1,11 @@
-package auther
+package checker
 
 import (
-	"auther/internal/database"
+	"checker/internal/database"
 	"context"
 
 	"github.com/google/uuid"
+	"github.com/jackc/pgx/v4"
 )
 
 type DatabaseAuthInfoStorage struct {
@@ -15,18 +16,38 @@ func NewDatabaseAuthInfoStorage(queries *database.Queries) *DatabaseAuthInfoStor
 	return &DatabaseAuthInfoStorage{queries: queries}
 }
 
-func (db *DatabaseAuthInfoStorage) GetClients() ([]string, error) {
+func (db *DatabaseAuthInfoStorage) GetClients() ([]uuid.UUID, error) {
 	clients, err := db.queries.GetClients(context.Background())
 	if err != nil {
+		if err == pgx.ErrNoRows {
+			return []uuid.UUID{}, nil
+		}
+
 		return nil, err
 	}
 
 	return clients, nil
 }
+func (db *DatabaseAuthInfoStorage) GetClientGroups(clientID uuid.UUID) ([]uuid.UUID, error) {
+	groups, err := db.queries.GetClientGroups(context.Background(), clientID)
+	if err != nil {
+		if err == pgx.ErrNoRows {
+			return []uuid.UUID{}, nil
+		}
+
+		return nil, err
+	}
+
+	return groups, nil
+}
 
 func (db *DatabaseAuthInfoStorage) GetApis() ([]Api, error) {
 	apis, err := db.queries.GetApis(context.Background())
 	if err != nil {
+		if err == pgx.ErrNoRows {
+			return []Api{}, nil
+		}
+
 		return nil, err
 	}
 
@@ -41,6 +62,10 @@ func (db *DatabaseAuthInfoStorage) GetApis() ([]Api, error) {
 func (db *DatabaseAuthInfoStorage) GetApiRoutes(apiID uuid.UUID) ([]Route, error) {
 	routes, err := db.queries.GetApiRoutes(context.Background(), apiID)
 	if err != nil {
+		if err == pgx.ErrNoRows {
+			return []Route{}, nil
+		}
+
 		return nil, err
 	}
 
@@ -52,11 +77,28 @@ func (db *DatabaseAuthInfoStorage) GetApiRoutes(apiID uuid.UUID) ([]Route, error
 	return items, nil
 }
 
-func (db *DatabaseAuthInfoStorage) GetRouteClients(routeID uuid.UUID) ([]string, error) {
+func (db *DatabaseAuthInfoStorage) GetRouteClients(routeID uuid.UUID) ([]uuid.UUID, error) {
 	clients, err := db.queries.GetRouteClients(context.Background(), routeID)
 	if err != nil {
+		if err == pgx.ErrNoRows {
+			return []uuid.UUID{}, nil
+		}
+
 		return nil, err
 	}
 
 	return clients, nil
+}
+
+func (db *DatabaseAuthInfoStorage) GetRouteGroups(routeID uuid.UUID) ([]uuid.UUID, error) {
+	groups, err := db.queries.GetRouteGroups(context.Background(), routeID)
+	if err != nil {
+		if err == pgx.ErrNoRows {
+			return []uuid.UUID{}, nil
+		}
+
+		return nil, err
+	}
+
+	return groups, nil
 }

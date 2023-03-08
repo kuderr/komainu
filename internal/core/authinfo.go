@@ -1,33 +1,40 @@
-package auther
+package checker
 
 import (
 	"fmt"
 	"regexp"
 	"strings"
 	"sync"
+
+	"github.com/google/uuid"
 )
 
-type AccessMap map[string]map[string]map[string][]string
-type ClientsSet map[string]struct{}
+type AccessMap map[string]map[string]map[string][]uuid.UUID
+type ClientsMap map[uuid.UUID][]uuid.UUID
 
 type AuthInfo struct {
-	// Map api -> methods -> routes -> clients.
+	// Map api url -> methods -> routes -> clients slice.
 	// Slice of clients, because we will need to search for intersection later.
-	// E.g. {"https://test.com": {"GET": {"/test": ["rob1", "grp1"], `/test/[\w-]+`: ["user1", "rob1"]}}}
+	// E.g. {"https://test.com": {"GET": {"/test": {"grp1", "user2"}, `/test/[\w-]+`: {"user1", "rob1"}}}}
+	// Instead of client names is uuid`s.
 	accesses AccessMap
 
-	// Set of all clients/robots in system
-	clients ClientsSet
+	// Map of clients to its client `entities` – client groups and itself.
+	// Through these entities accesses are created in management layer (auth-api).
+	// And by them accesses are checked here.
+	// E.g. {"user1": {"grp1", "grp2", "user1"}, "rob1": {"rob1", "grp2"}}
+	// Instead of client names is uuid`s.
+	clients ClientsMap
 
 	// Lock update operation
 	mutex sync.RWMutex
 }
 
-func NewAuthInfo(accesses AccessMap, clients ClientsSet) *AuthInfo {
+func NewAuthInfo(accesses AccessMap, clients ClientsMap) *AuthInfo {
 	return &AuthInfo{accesses: accesses, clients: clients}
 }
 
-func (a *AuthInfo) Update(accesses AccessMap, clients ClientsSet) {
+func (a *AuthInfo) Update(accesses AccessMap, clients ClientsMap) {
 	// Lock read operations to update auth info
 	a.mutex.Lock()
 	defer a.mutex.Unlock()
@@ -36,12 +43,13 @@ func (a *AuthInfo) Update(accesses AccessMap, clients ClientsSet) {
 	a.clients = clients
 }
 
-func (a *AuthInfo) CheckAccess(request *AccessData, clientName string) (bool, error) {
+func (a *AuthInfo) CheckAccess(request *AccessData, clientID uuid.UUID) (bool, error) {
 	a.mutex.RLock()
 	defer a.mutex.RUnlock()
 
-	if _, ok := a.clients[clientName]; !ok {
-		return false, &NotFoundError{msg: fmt.Sprintf("Client %s not found", clientName)}
+	clientEntities, ok := a.clients[clientID]
+	if !ok {
+		return false, &NotFoundError{msg: fmt.Sprintf("Client with ID %s not found", clientID)}
 	}
 
 	reqApiUrl := strings.TrimRight(request.ApiUrl, "/")
@@ -69,27 +77,14 @@ func (a *AuthInfo) CheckAccess(request *AccessData, clientName string) (bool, er
 		}
 	}
 
-	if contains(users, clientName) {
+	if hasIntersection(users, clientEntities) {
 		return true, nil
 	}
 
 	return false, nil
 }
 
-func contains(s []string, str string) bool {
-	for _, v := range s {
-		if v == str {
-			return true
-		}
-	}
-
-	return false
-}
-
-// FUTURE
-// Hash has complexity: O(n * x) where x is a factor of hash function efficiency (between 1 and 2)
-func HashGeneric[T comparable](a []T, b []T) []T {
-	set := make([]T, 0)
+func hasIntersection[T comparable](a []T, b []T) bool {
 	hash := make(map[T]struct{})
 
 	for _, v := range a {
@@ -98,9 +93,9 @@ func HashGeneric[T comparable](a []T, b []T) []T {
 
 	for _, v := range b {
 		if _, ok := hash[v]; ok {
-			set = append(set, v)
+			return true
 		}
 	}
 
-	return set
+	return false
 }

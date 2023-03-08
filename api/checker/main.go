@@ -1,8 +1,8 @@
-package autherApi
+package api
 
 import (
-	"auther/internal/auther"
-	"auther/internal/tokens"
+	checker "checker/internal/core"
+	"checker/internal/tokens"
 	"net/http"
 
 	"github.com/gin-gonic/gin"
@@ -10,16 +10,16 @@ import (
 
 type AuthRequest struct {
 	Token string `json:"token,omitempty" binding:"required"`
-	auther.AccessData
+	checker.AccessData
 }
 
 type Service struct {
-	authInfo *auther.AuthInfo
-	secret   string
+	authInfo     *checker.AuthInfo
+	JWTPublicKey string
 }
 
-func NewService(authInfo *auther.AuthInfo, secret string) *Service {
-	return &Service{authInfo: authInfo, secret: secret}
+func NewService(authInfo *checker.AuthInfo, JWTPublicKey string) *Service {
+	return &Service{authInfo: authInfo, JWTPublicKey: JWTPublicKey}
 }
 
 func (s *Service) RegisterHandlers(router *gin.Engine) {
@@ -35,22 +35,22 @@ func (s *Service) CheckAccess(c *gin.Context) {
 		return
 	}
 
-	token, err := tokens.DecodeToken(request.Token, s.secret)
+	token, err := tokens.DecodeToken(request.Token, s.JWTPublicKey)
 	if err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
 	}
 
-	clientName, err := tokens.GetClientName(token)
+	clientID, err := tokens.GetClientID(token)
 	if err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
 	}
 
-	hasAccess, err := s.authInfo.CheckAccess(&request.AccessData, clientName)
+	hasAccess, err := s.authInfo.CheckAccess(&request.AccessData, clientID)
 	if err != nil {
 		switch err.(type) {
-		case *auther.NotFoundError:
+		case *checker.NotFoundError:
 			c.JSON(http.StatusNotFound, gin.H{"error": err.Error()})
 			return
 		default:
@@ -61,8 +61,8 @@ func (s *Service) CheckAccess(c *gin.Context) {
 
 	// Build response
 	if hasAccess {
-		c.IndentedJSON(http.StatusOK, gin.H{"message": "Access permit", "access": true, "client": clientName})
+		c.IndentedJSON(http.StatusOK, gin.H{"message": "Access permit", "access": true, "client": clientID})
 	} else {
-		c.IndentedJSON(http.StatusForbidden, gin.H{"message": "Access denied", "access": false, "client": clientName})
+		c.IndentedJSON(http.StatusForbidden, gin.H{"message": "Access denied", "access": false, "client": clientID})
 	}
 }

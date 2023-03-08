@@ -7,8 +7,8 @@ import (
 )
 
 type Config struct {
-	Secret      string `mapstructure:"SECRET"`
-	PostgresUrl string `mapstructure:"POSTGRES_URL"`
+	JWTPublicKey string `mapstructure:"JWT_PUBLIC_KEY"`
+	PostgresUrl  string `mapstructure:"POSTGRES_URL"`
 }
 
 // TODO: create pydantic BaseSettings logic
@@ -28,9 +28,9 @@ func Read(tp, name, path string) (*Config, error) {
 		}
 	}
 
-	secret, ok := viper.Get("SECRET").(string)
+	JWTPublicKey, ok := viper.Get("JWT_PUBLIC_KEY").(string)
 	if !ok {
-		log.Fatalf("SECRET setting required")
+		log.Fatalf("JWT_PUBLIC_KEY setting required")
 	}
 
 	postgresUrl, ok := viper.Get("POSTGRES_URL").(string)
@@ -39,7 +39,7 @@ func Read(tp, name, path string) (*Config, error) {
 	}
 
 	return &Config{
-		Secret:      secret,
-		PostgresUrl: postgresUrl,
+		JWTPublicKey: JWTPublicKey,
+		PostgresUrl:  postgresUrl,
 	}, nil
 }

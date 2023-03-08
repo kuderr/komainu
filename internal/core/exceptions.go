@@ -1,4 +1,4 @@
-package auther
+package checker
 
 type NotFoundError struct {
 	msg string

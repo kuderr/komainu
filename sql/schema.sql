@@ -4,8 +4,7 @@ CREATE TABLE routes_association (
 );
 
 CREATE TABLE clients (
-    id uuid PRIMARY KEY,
-    name character varying(100) NOT NULL
+    id uuid PRIMARY KEY
 );
 
 CREATE TABLE routes (
@@ -17,6 +16,19 @@ CREATE TABLE routes (
 
 CREATE TABLE apis (
     id uuid PRIMARY KEY,
-    name character varying(100) NOT NULL,
     url character varying(100) NOT NULL
+);
+
+CREATE TABLE group_clients_association (
+    group_id uuid NOT NULL,
+    client_id uuid NOT NULL
+);
+
+CREATE TABLE group_routes_association (
+    group_id uuid NOT NULL,
+    route_id uuid NOT NULL
+);
+
+CREATE TABLE groups (
+    id uuid PRIMARY KEY
 );

@@ -3,14 +3,13 @@ version: "3.9"
 services:
   server:
     profiles: [ 'all', 'dev' ]
-    image: auther:local
     build:
       context: .
     environment:
       POSTGRES_URL: postgres://postgres:postgres@postgres/authdb
-      SECRET: xxx
+      JWT_PUBLIC_KEY: xxx
     ports:
-      - "8080:8080"
+      - "5000:5000"
     depends_on:
       - postgres
 

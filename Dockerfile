@@ -11,10 +11,10 @@ COPY cmd ./cmd
 COPY internal ./internal
 COPY config ./config
 
-RUN CGO_ENABLED=0 go build -o auther ./cmd/service/main.go
+RUN CGO_ENABLED=0 go build -o checker ./cmd/service/main.go
 
 FROM busybox
 WORKDIR /bin
-COPY --from=builder /opt/auther /bin/auther
+COPY --from=builder /opt/checker /bin/checker
 ENV GIN_MODE=release
-CMD /bin/auther
+CMD /bin/checker
